@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FGSM Adversarial Attack Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #007bff;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .image-preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .result {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .api-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .api-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .api-info a {
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .api-info a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 FGSM Adversarial Attack Dashboard</h1>
+            <p>Generate adversarial examples using Fast Gradient Sign Method</p>
+        </header>
+
+        <div class="main-content">
+            <!-- API Information -->
+            <div class="api-info">
+                <h3>📚 API Documentation</h3>
+                <p>Backend API is running at <a href="http://localhost:8000" target="_blank" rel="noopener">http://localhost:8000</a></p>
+                <p>📖 <a href="http://localhost:8000/docs" target="_blank" rel="noopener">Interactive API Docs</a> | 
+                   📋 <a href="http://localhost:8000/redoc" target="_blank" rel="noopener">Alternative Docs</a> | 
+                   🏥 <a href="http://localhost:8000/health" target="_blank" rel="noopener">Health Check</a></p>
+            </div>
+
+            <!-- Image Upload Section -->
+            <div class="section">
+                <h2>📁 Upload Image</h2>
+                <div class="form-group">
+                    <label for="imageFile">Select Image File:</label>
+                    <input type="file" id="imageFile" accept="image/*" onchange="previewImage()">
+                </div>
+                <div id="imagePreview" class="image-preview hidden"></div>
+            </div>
+
+            <!-- Attack Parameters Section -->
+            <div class="section">
+                <h2>⚙️ Attack Parameters</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trueLabel">True Label (0-9):</label>
+                        <input type="number" id="trueLabel" min="0" max="9" value="5" placeholder="Enter true label">
+                    </div>
+                    <div class="form-group">
+                        <label for="epsilon">Epsilon (0.0-1.0):</label>
+                        <input type="number" id="epsilon" min="0.0" max="1.0" step="0.01" value="0.1" placeholder="Perturbation strength">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="attackType">Attack Type:</label>
+                        <select id="attackType" onchange="toggleTargetLabel()">
+                            <option value="untargeted">Untargeted Attack</option>
+                            <option value="targeted">Targeted Attack</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="targetLabelGroup">
+                        <label for="targetLabel">Target Label (0-9):</label>
+                        <input type="number" id="targetLabel" min="0" max="9" value="0" placeholder="Enter target label">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons Section -->
+            <div class="section">
+                <h2>🎯 Execute Attack</h2>
+                <button class="btn btn-success" onclick="runFGSMAttack()">🚀 Run FGSM Attack</button>
+                <button class="btn btn-secondary" onclick="runBatchAttack()">📦 Run Batch Attack</button>
+                <button class="btn" onclick="testHealthCheck()">🏥 Health Check</button>
+                <button class="btn btn-danger" onclick="clearResults()">🗑️ Clear Results</button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section">
+                <h2>📊 Results</h2>
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Processing attack...</p>
+                </div>
+                <div id="results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedImageData = null;
+
+        function previewImage() {
+            const fileInput = document.getElementById('imageFile');
+            const preview = document.getElementById('imagePreview');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    uploadedImageData = e.target.result;
+                    preview.innerHTML = `<img src="${uploadedImageData}" alt="Preview">`;
+                    preview.classList.remove('hidden');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function toggleTargetLabel() {
+            const attackType = document.getElementById('attackType').value;
+            const targetGroup = document.getElementById('targetLabelGroup');
+            
+            if (attackType === 'targeted') {
+                targetGroup.style.display = 'block';
+            } else {
+                targetGroup.style.display = 'none';
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function showResult(data, isError = false) {
+            hideLoading();
+            const resultsDiv = document.getElementById('results');
+            const resultClass = isError ? 'result error' : 'result';
+            
+            if (typeof data === 'object') {
+                // Format the response nicely
+                let formattedResult = '';
+                
+                if (data.success !== undefined) {
+                    formattedResult += `✅ Success: ${data.success}\n`;
+                }
+                
+                if (data.attack_success !== undefined) {
+                    formattedResult += `🎯 Attack Success: ${data.attack_success}\n`;
+                }
+                
+                if (data.message) {
+                    formattedResult += `📝 Message: ${data.message}\n`;
+                }
+                
+                if (data.original_prediction !== undefined) {
+                    formattedResult += `📊 Original Prediction: ${data.original_prediction}\n`;
+                }
+                
+                if (data.adversarial_prediction !== undefined) {
+                    formattedResult += `🎭 Adversarial Prediction: ${data.adversarial_prediction}\n`;
+                }
+                
+                if (data.original_confidence !== undefined) {
+                    formattedResult += ` Original Confidence: ${(data.original_confidence * 100).toFixed(2)}%\n`;
+                }
+                
+                if (data.adversarial_confidence !== undefined) {
+                    formattedResult += ` Adversarial Confidence: ${(data.adversarial_confidence * 100).toFixed(2)}%\n`;
+                }
+                
+                if (data.epsilon_used !== undefined) {
+                    formattedResult += ` Epsilon Used: ${data.epsilon_used}\n`;
+                }
+                
+                if (data.perturbation_norm !== undefined) {
+                    formattedResult += ` Perturbation Norm: ${data.perturbation_norm.toFixed(4)}\n`;
+                }
+                
+                if (data.adversarial_image) {
+                    formattedResult += ` Adversarial Image: [Base64 encoded - see below]\n`;
+                }
+                
+                resultsDiv.innerHTML = `<div class="${resultClass}">${formattedResult}</div>`;
+                
+                // Show adversarial image if available
+                if (data.adversarial_image) {
+                    resultsDiv.innerHTML += `
+                        <div class="image-preview">
+                            <h3> Generated Adversarial Image:</h3>
+                            <img src="${data.adversarial_image}" alt="Adversarial Example" style="max-width: 200px;">
+                        </div>
+                    `;
+                }
+            } else {
+                resultsDiv.innerHTML = `<div class="${resultClass}">${data}</div>`;
+            }
+        }
+
+        async function runFGSMAttack() {
+            if (!uploadedImageData) {
+                alert('Please upload an image first!');
+                return;
+            }
+
+            const trueLabel = parseInt(document.getElementById('trueLabel').value);
+            const epsilon = parseFloat(document.getElementById('epsilon').value);
+            const attackType = document.getElementById('attackType').value;
+            const targetLabel = parseInt(document.getElementById('targetLabel').value);
+
+            // Validate inputs
+            if (isNaN(trueLabel) || trueLabel < 0 || trueLabel > 9) {
+                alert('Please enter a valid true label (0-9)');
+                return;
+            }
+
+            if (isNaN(epsilon) || epsilon < 0 || epsilon > 1) {
+                alert('Please enter a valid epsilon (0.0-1.0)');
+                return;
+            }
+
+            if (attackType === 'targeted' && (isNaN(targetLabel) || targetLabel < 0 || targetLabel > 9)) {
+                alert('Please enter a valid target label (0-9)');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const requestData = {
+                    image_data: uploadedImageData,
+                    true_label: trueLabel,
+                    epsilon: epsilon,
+                    attack_type: attackType
+                };
+
+                if (attackType === 'targeted') {
+                    requestData.target_label = targetLabel;
+                }
+
+                const response = await fetch('http://localhost:8000/attack', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(errorData.detail || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                let errorMessage = error.message;
+                
+                // Handle specific error cases
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Cannot connect to backend server. Please ensure the FastAPI server is running on http://localhost:8000';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'CORS error: Backend server is not allowing requests from this origin';
+                }
+                
+                showResult(` Error: ${errorMessage}`, true);
+            }
+        }
+
+        async function runBatchAttack() {
+            if (!uploadedImageData) {
+                alert('Please upload an image first for batch processing!');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Create sample batch data (you can modify this)
+                const sampleImages = [
+                    uploadedImageData || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+                ];
+                const sampleLabels = [parseInt(document.getElementById('trueLabel').value) || 5];
+
+                const requestData = {
+                    images_data: sampleImages,
+                    true_labels: sampleLabels,
+                    epsilon: parseFloat(document.getElementById('epsilon').value) || 0.1,
+                    attack_type: document.getElementById('attackType').value || 'untargeted'
+                };
+
+                const response = await fetch('http://localhost:8000/batch-attack', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(errorData.detail || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                let errorMessage = error.message;
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Cannot connect to backend server. Please ensure the FastAPI server is running on http://localhost:8000';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'CORS error: Backend server is not allowing requests from this origin';
+                }
+                
+                showResult(` Error: ${errorMessage}`, true);
+            }
+        }
+
+        async function testHealthCheck() {
+            showLoading();
+
+            try {
+                const response = await fetch('http://localhost:8000/health', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(errorData.detail || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                let errorMessage = error.message;
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Cannot connect to backend server. Please ensure the FastAPI server is running on http://localhost:8000';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'CORS error: Backend server is not allowing requests from this origin';
+                }
+                
+                showResult(` Health Check Error: ${errorMessage}`, true);
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+            uploadedImageData = null;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleTargetLabel(); // Set initial state
+            checkBackendStatus(); // Check if backend is running
+        });
+
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch('http://localhost:8000/health', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Backend is running:', data);
+                    
+                    // Update API info section to show backend is connected
+                    const apiInfo = document.querySelector('.api-info');
+                    apiInfo.innerHTML += '<p style="color: #28a745; font-weight: bold;"> Backend server is connected and ready!</p>';
+                }
+            } catch (error) {
+                console.warn(' Backend not accessible:', error.message);
+                
+                // Update API info section to show backend is not connected
+                const apiInfo = document.querySelector('.api-info');
+                apiInfo.innerHTML += '<p style="color: #dc3545; font-weight: bold;"> Backend server is not accessible. Please start the FastAPI server first.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

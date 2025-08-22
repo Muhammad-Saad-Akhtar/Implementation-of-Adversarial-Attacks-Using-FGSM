@@ -1,0 +1,126 @@
+{
+  "clean_accuracy": 0.9888,
+  "fgsm": {
+    "0.0": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.9888,
+      "attack_success_rate": 0.0
+    },
+    "0.05": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.9544,
+      "attack_success_rate": 0.0344
+    },
+    "0.1": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.8646,
+      "attack_success_rate": 0.12420000000000002
+    },
+    "0.15": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.6806,
+      "attack_success_rate": 0.3082
+    },
+    "0.2": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.4436,
+      "attack_success_rate": 0.5452
+    },
+    "0.25": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.2431,
+      "attack_success_rate": 0.7457
+    },
+    "0.3": {
+      "original_accuracy": 0.9888,
+      "adversarial_accuracy": 0.1405,
+      "attack_success_rate": 0.8482999999999998
+    }
+  },
+  "gaussian": {
+    "0.0": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9888,
+        "attack_success_rate": 0.0
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9888,
+        "attack_success_rate": 0.0
+      }
+    },
+    "0.05": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9881,
+        "attack_success_rate": 0.0013000000000000002
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9876,
+        "attack_success_rate": 0.0012000000000000001
+      }
+    },
+    "0.1": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9869,
+        "attack_success_rate": 0.0032
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9858,
+        "attack_success_rate": 0.0030000000000000005
+      }
+    },
+    "0.15": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9833,
+        "attack_success_rate": 0.006500000000000001
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9838,
+        "attack_success_rate": 0.005
+      }
+    },
+    "0.2": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9793,
+        "attack_success_rate": 0.011
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9817,
+        "attack_success_rate": 0.0071
+      }
+    },
+    "0.25": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9663,
+        "attack_success_rate": 0.024300000000000002
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9801,
+        "attack_success_rate": 0.008700000000000001
+      }
+    },
+    "0.3": {
+      "pure_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9471,
+        "attack_success_rate": 0.0433
+      },
+      "gradient_gaussian": {
+        "original_accuracy": 0.9888,
+        "adversarial_accuracy": 0.9781,
+        "attack_success_rate": 0.010700000000000001
+      }
+    }
+  }
+}

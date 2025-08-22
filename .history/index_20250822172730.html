@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FGSM Adversarial Attack</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9e9e9;
+            border-radius: 4px;
+        }
+        .image-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .image-box {
+            text-align: center;
+        }
+        .image-box img {
+            max-width: 350px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>FGSM Adversarial Attack Demo</h1>
+    <form id="attackForm">
+        <div class="form-group">
+            <label for="imageFile">Upload Image:</label>
+            <input type="file" id="imageFile" name="file" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="trueLabel">True Label:</label>
+            <input type="number" id="trueLabel" name="true_label" min="0" max="9" value="0" required>
+        </div>
+        <div class="form-group">
+            <label for="epsilon">Epsilon (Perturbation Strength):</label>
+            <input type="number" id="epsilon" name="epsilon" step="0.01" min="0.0" max="1.0" value="0.1" required>
+        </div>
+        <div class="form-group">
+            <label for="attackType">Attack Type:</label>
+            <select id="attackType" name="attack_type">
+                <option value="untargeted">Untargeted</option>
+                <option value="targeted">Targeted</option>
+            </select>
+        </div>
+        <div class="form-group" id="targetLabelGroup" style="display: none;">
+            <label for="targetLabel">Target Label:</label>
+            <input type="number" id="targetLabel" name="target_label" min="0" max="9" value="1">
+        </div>
+        <button type="submit">Generate Adversarial Image</button>
+    </form>
+
+    <div class="results" id="results" style="display: none;">
+        <h2>Attack Results</h2>
+        <div class="message" id="resultMessage"></div>
+        <p><strong>Original Prediction:</strong> <span id="originalPrediction"></span> (Confidence: <span id="originalConfidence"></span>)</p>
+        <p><strong>Adversarial Prediction:</strong> <span id="adversarialPrediction"></span> (Confidence: <span id="adversarialConfidence"></span>)</p>
+        <div class="image-container">
+            <div class="image-box">
+                <p><strong>Original Image</strong></p>
+                <img id="originalImage" src="" alt="Original Image">
+            </div>
+            <div class="image-box">
+                <p><strong>Adversarial Image</strong></p>
+                <img id="adversarialImage" src="" alt="Adversarial Image">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const attackForm = document.getElementById('attackForm');
+    const attackTypeSelect = document.getElementById('attackType');
+    const targetLabelGroup = document.getElementById('targetLabelGroup');
+    const resultsDiv = document.getElementById('results');
+    const resultMessage = document.getElementById('resultMessage');
+    const originalPrediction = document.getElementById('originalPrediction');
+    const originalConfidence = document.getElementById('originalConfidence');
+    const adversarialPrediction = document.getElementById('adversarialPrediction');
+    const adversarialConfidence = document.getElementById('adversarialConfidence');
+    const originalImage = document.getElementById('originalImage');
+    const adversarialImage = document.getElementById('adversarialImage');
+
+    // Show/hide target label input based on attack type
+    attackTypeSelect.addEventListener('change', (event) => {
+        if (event.target.value === 'targeted') {
+            targetLabelGroup.style.display = 'block';
+        } else {
+            targetLabelGroup.style.display = 'none';
+        }
+    });
+
+    attackForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(attackForm);
+
+        // Get values from form
+        const file = formData.get('file');
+        const trueLabel = formData.get('true_label');
+        const epsilon = formData.get('epsilon');
+        const attackType = formData.get('attack_type');
+        const targetLabel = attackType === 'targeted' ? formData.get('target_label') : null;
+        
+        // Display the original image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            originalImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        try {
+            const response = await fetch('http://localhost:8000/attack/file', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Display results
+                resultMessage.textContent = data.message;
+                originalPrediction.textContent = data.original_prediction;
+                originalConfidence.textContent = (data.original_confidence * 100).toFixed(2) + '%';
+                adversarialPrediction.textContent = data.adversarial_prediction;
+                adversarialConfidence.textContent = (data.adversarial_confidence * 100).toFixed(2) + '%';
+                adversarialImage.src = data.adversarial_image;
+                resultsDiv.style.display = 'block';
+            } else {
+                alert(`Error: ${data.detail || data.message}`);
+                resultsDiv.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Network or server error:', error);
+            alert('Failed to connect to the API. Please ensure the server is running.');
+            resultsDiv.style.display = 'none';
+        }
+    });
+});
+</script>
+
+</body>
+</html>

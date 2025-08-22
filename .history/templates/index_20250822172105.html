@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FGSM Adversarial Attack Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="file"], input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        input[type="file"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        button {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .results.show {
+            display: block;
+        }
+        .results h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .image-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .image-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .image-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .image-box img {
+            max-width: 200px;
+            max-height: 200px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            image-rendering: pixelated; /* For better MNIST display */
+        }
+        .prediction-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .success {
+            color: #28a745;
+        }
+        .failure {
+            color: #dc3545;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+        .error.show {
+            display: block;
+        }
+        .hidden {
+            display: none;
+        }
+        small {
+            color: #666;
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .api-status {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            text-align: center;
+            font-size: 14px;
+        }
+        .api-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row, .image-container {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ FGSM Adversarial Attack Demo</h1>
+            <p>Generate adversarial examples using the Fast Gradient Sign Method</p>
+        </div>
+        
+        <div id="apiStatus" class="api-status">
+            🔄 Checking API status...
+        </div>
+
+        <div class="form-section">
+            <form id="attackForm">
+                <div class="form-group">
+                    <label for="imageInput">📁 Select Image (Handwritten Digit):</label>
+                    <input type="file" id="imageInput" accept="image/*" required>
+                    <small>Recommended: Clear image of a handwritten digit (0-9), preferably 28x28 pixels on white background</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trueLabel">🏷️ True Label (0-9):</label>
+                        <input type="number" id="trueLabel" min="0" max="9" value="0" required>
+                        <small>The actual digit shown in the image</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epsilon">⚡ Epsilon (Attack Strength):</label>
+                        <input type="number" id="epsilon" min="0.01" max="1.0" step="0.01" value="0.10" required>
+                        <small>Higher values = stronger attacks but more visible changes</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="attackType">🎯 Attack Type:</label>
+                        <select id="attackType" required>
+                            <option value="untargeted">Untargeted (Any wrong prediction)</option>
+                            <option value="targeted">Targeted (Specific wrong prediction)</option>
+                        </select>
+                    </div>
+
+                    <div id="targetLabelContainer" class="form-group hidden">
+                        <label for="targetLabel">🎯 Target Label (0-9):</label>
+                        <input type="number" id="targetLabel" min="0" max="9" value="1">
+                        <small>The digit you want the model to incorrectly predict</small>
+                    </div>
+                </div>
+
+                <button type="submit" id="attackButton">🚀 Generate Adversarial Example</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generating adversarial example...</p>
+        </div>
+
+        <div id="results" class="results">
+            <h2>📊 Attack Results</h2>
+            <div class="image-container">
+                <div class="image-box">
+                    <h3>Original Image</h3>
+                    <img id="originalImage" src="" alt="Original Image">
+                    <div class="prediction-info">
+                        <strong>Prediction:</strong> <span id="originalPrediction"></span><br>
+                        <strong>Confidence:</strong> <span id="originalConfidence"></span>%
+                    </div>
+                </div>
+                <div class="image-box">
+                    <h3>Adversarial Image</h3>
+                    <img id="adversarialImage" src="" alt="Adversarial Image">
+                    <div class="prediction-info">
+                        <strong>Prediction:</strong> <span id="adversarialPrediction"></span><br>
+                        <strong>Confidence:</strong> <span id="adversarialConfidence"></span>%
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="attackSuccessValue">-</div>
+                    <div class="metric-label">Attack Success</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="epsilonValue">-</div>
+                    <div class="metric-label">Epsilon Used</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="perturbationValue">-</div>
+                    <div class="metric-label">Perturbation Norm</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="confidenceChangeValue">-</div>
+                    <div class="metric-label">Confidence Change</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        // Check API status on page load
+        window.addEventListener('load', checkApiStatus);
+
+        async function checkApiStatus() {
+            const statusDiv = document.getElementById('apiStatus');
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = `✅ API is online | Device: ${data.device.toUpperCase()} | CUDA: ${data.cuda_available ? '✅' : '❌'}`;
+                    statusDiv.className = 'api-status';
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ API is offline - Please start the FastAPI server';
+                statusDiv.className = 'api-status offline';
+            }
+        }
+
+        // Show/hide target label input based on attack type
+        document.getElementById('attackType').addEventListener('change', function() {
+            const container = document.getElementById('targetLabelContainer');
+            const targetInput = document.getElementById('targetLabel');
+            
+            if (this.value === 'targeted') {
+                container.classList.remove('hidden');
+                targetInput.required = true;
+            } else {
+                container.classList.add('hidden');
+                targetInput.required = false;
+            }
+        });
+
+        // Form submission
+        document.getElementById('attackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            performAttack();
+        });
+
+        async function performAttack() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select an image file');
+                return;
+            }
+
+            // Validate target label for targeted attacks
+            const attackType = document.getElementById('attackType').value;
+            const trueLabel = parseInt(document.getElementById('trueLabel').value);
+            const targetLabel = parseInt(document.getElementById('targetLabel').value);
+            
+            if (attackType === 'targeted' && trueLabel === targetLabel) {
+                showError('Target label cannot be the same as true label for targeted attacks');
+                return;
+            }
+
+            // Show loading state
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                // Convert image to base64
+                const base64Image = await fileToBase64(file);
+                
+                // Prepare request data
+                const requestData = {
+                    image_data: base64Image,
+                    true_label: trueLabel,
+                    epsilon: parseFloat(document.getElementById('epsilon').value),
+                    attack_type: attackType
+                };
+
+                if (attackType === 'targeted') {
+                    requestData.target_label = targetLabel;
+                }
+
+                // Make API request
+                const response = await fetch('/attack', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Attack failed');
+                }
+
+                displayResults(result, `data:image/png;base64,${base64Image}`);
+                
+            } catch (error) {
+                console.error('Attack error:', error);
+                showError(`Error: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // Remove the data URL prefix to get just the base64 data
+                    const base64Data = reader.result.split(',')[1];
+                    resolve(base64Data);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function displayResults(result, originalImageDataUrl) {
+            // Display images
+            document.getElementById('originalImage').src = originalImageDataUrl;
+            document.getElementById('adversarialImage').src = result.adversarial_image;
+            
+            // Display predictions and confidence
+            document.getElementById('originalPrediction').textContent = result.original_prediction;
+            document.getElementById('adversarialPrediction').textContent = result.adversarial_prediction;
+            document.getElementById('originalConfidence').textContent = (result.original_confidence * 100).toFixed(1);
+            document.getElementById('adversarialConfidence').textContent = (result.adversarial_confidence * 100).toFixed(1);
+            
+            // Display metrics
+            const attackSuccessElement = document.getElementById('attackSuccessValue');
+            attackSuccessElement.textContent = result.attack_success ? '✅ Success' : '❌ Failed';
+            attackSuccessElement.className = `metric-value ${result.attack_success ? 'success' : 'failure'}`;
+            
+            document.getElementById('epsilonValue').textContent = result.epsilon_used.toFixed(3);
+            document.getElementById('perturbationValue').textContent = result.perturbation_norm.toFixed(4);
+            
+            // Calculate confidence change
+            const confidenceChange = ((result.adversarial_confidence - result.original_confidence) * 100);
+            const changeElement = document.getElementById('confidenceChangeValue');
+            changeElement.textContent = `${confidenceChange >= 0 ? '+' : ''}${confidenceChange.toFixed(1)}%`;
+            changeElement.className = `metric-value ${confidenceChange < 0 ? 'success' : 'failure'}`;
+            
+            showResults();
+        }
+
+        function showLoading(show) {
+            const loadingDiv = document.getElementById('loading');
+            const button = document.getElementById('attackButton');
+            
+            if (show) {
+                loadingDiv.classList.add('show');
+                button.disabled = true;
+                button.textContent = '⏳ Processing...';
+            } else {
+                loadingDiv.classList.remove('show');
+                button.disabled = false;
+                button.textContent = '🚀 Generate Adversarial Example';
+            }
+        }
+
+        function showResults() {
+            document.getElementById('results').classList.add('show');
+        }
+
+        function hideResults() {
+            document.getElementById('results').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function hideError() {
+            const errorDiv = document.getElementById('error');
+            errorDiv.classList.remove('show');
+        }
+
+        // Auto-refresh API status every 30 seconds
+        setInterval(checkApiStatus, 30000);
+    </script>
+</body>
+</html>
